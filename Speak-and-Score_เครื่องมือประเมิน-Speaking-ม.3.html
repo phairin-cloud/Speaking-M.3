@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speak & Score — เครื่องมือวัดผลดิจิทัล Speaking ม.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#132A46;
+    --navy:#1B3A6B;
+    --navy-deep:#0E2140;
+    --teal:#1FB8A6;
+    --teal-soft:#E4F7F4;
+    --coral:#FF6B57;
+    --coral-soft:#FFE9E4;
+    --cream:#F6F5EF;
+    --paper:#FFFFFF;
+    --line:#DDE3EA;
+    --muted:#5B6B7D;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Sarabun',sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'Space Mono',monospace;}
+
+  /* ---------- HEADER ---------- */
+  header{
+    background:linear-gradient(160deg,var(--navy-deep) 0%, var(--navy) 65%, #234a86 100%);
+    color:#fff;
+    padding:28px 6vw 34px;
+    position:relative;
+    overflow:hidden;
+  }
+  header::after{
+    content:"";
+    position:absolute; right:-60px; top:-60px;
+    width:260px; height:260px; border-radius:50%;
+    background:radial-gradient(circle, rgba(31,184,166,0.35), transparent 70%);
+  }
+  .eyebrow{
+    font-family:'Space Mono',monospace;
+    font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:#8FD8CF; margin:0 0 10px;
+  }
+  h1{font-size:clamp(22px,3.2vw,32px); margin:0 0 6px; font-weight:800; line-height:1.25;}
+  .sub{color:#C9D6E8; margin:0; font-size:15px; max-width:640px; line-height:1.6;}
+  .meta-row{
+    display:flex; gap:10px; flex-wrap:wrap; margin-top:18px;
+  }
+  .pill{
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.22);
+    padding:6px 14px; border-radius:999px; font-size:13px; color:#fff;
+    display:flex; align-items:center; gap:6px;
+  }
+  .pill b{color:#8FD8CF;}
+
+  /* ---------- LAYOUT ---------- */
+  main{
+    max-width:1040px; margin:-18px auto 60px; padding:0 6vw;
+    display:grid; grid-template-columns:1.15fr .85fr; gap:22px;
+  }
+  @media (max-width:860px){ main{grid-template-columns:1fr;} }
+
+  .card{
+    background:var(--paper); border:1px solid var(--line);
+    border-radius:16px; padding:24px 26px; box-shadow:0 1px 2px rgba(19,42,70,0.04);
+  }
+  .card + .card{margin-top:20px;}
+  .card h2{
+    font-size:16px; margin:0 0 4px; display:flex; align-items:center; gap:9px;
+    color:var(--navy-deep);
+  }
+  .step-no{
+    width:24px; height:24px; border-radius:7px; background:var(--teal-soft); color:var(--teal);
+    font-family:'Space Mono',monospace; font-weight:700; font-size:12px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .card p.hint{color:var(--muted); font-size:13.5px; margin:2px 0 16px; line-height:1.55;}
+
+  /* Student info */
+  .field-row{display:flex; gap:12px; flex-wrap:wrap;}
+  .field{flex:1; min-width:150px;}
+  .field label{font-size:12.5px; color:var(--muted); display:block; margin-bottom:5px;}
+  .field input, .field select{
+    width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:9px;
+    font-family:'Sarabun',sans-serif; font-size:14px; background:#FCFCFA;
+  }
+
+  /* Task prompt */
+  .task-box{
+    background:var(--teal-soft); border:1px dashed #9BD9D0; border-radius:12px;
+    padding:16px 18px; margin-top:14px;
+  }
+  .task-box .en{font-weight:700; color:var(--navy-deep); font-size:15px;}
+  .task-box .th{color:var(--ink); font-size:14px; margin-top:4px;}
+  .task-box .cando{
+    margin-top:10px; font-size:12.5px; color:var(--teal); font-family:'Space Mono',monospace;
+  }
+  select#topicSelect{margin-top:12px;}
+
+  /* Recorder */
+  .rec-wrap{display:flex; align-items:center; gap:18px; margin-top:6px;}
+  .rec-btn{
+    width:74px; height:74px; border-radius:50%; border:none; cursor:pointer;
+    background:var(--coral); color:#fff; font-size:26px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 18px rgba(255,107,87,0.35);
+    transition:transform .15s ease;
+    flex-shrink:0;
+  }
+  .rec-btn:hover{transform:scale(1.05);}
+  .rec-btn.recording{background:var(--navy-deep); animation:pulse 1.4s infinite;}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(31,58,107,0.45);}
+    70%{box-shadow:0 0 0 16px rgba(31,58,107,0);}
+    100%{box-shadow:0 0 0 0 rgba(31,58,107,0);}
+  }
+  .wave{display:flex; align-items:flex-end; gap:4px; height:44px; flex:1;}
+  .wave span{
+    width:5px; background:var(--line); border-radius:3px; height:8px;
+    transition:height .12s ease, background .2s ease;
+  }
+  .wave.active span{background:var(--teal);}
+  .timer{font-family:'Space Mono',monospace; font-size:20px; color:var(--navy-deep); min-width:56px; text-align:right;}
+  .rec-status{font-size:12.5px; color:var(--muted); margin-top:10px;}
+
+  /* Transcript / AI analysis */
+  .transcript-box{
+    margin-top:14px; background:#FCFCFA; border:1px solid var(--line); border-radius:10px;
+    padding:14px 16px; min-height:90px; font-size:14.5px; line-height:1.7; color:var(--ink);
+  }
+  .transcript-box .placeholder{color:#A7B2BE; font-style:italic;}
+  .ai-tag{
+    display:inline-flex; align-items:center; gap:6px; background:var(--navy); color:#fff;
+    font-size:11px; padding:3px 10px; border-radius:999px; font-family:'Space Mono',monospace;
+    margin-bottom:10px;
+  }
+  .analysis-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px;}
+  .stat{
+    background:var(--teal-soft); border-radius:10px; padding:12px; text-align:center;
+  }
+  .stat b{display:block; font-family:'Space Mono',monospace; font-size:20px; color:var(--navy-deep);}
+  .stat span{font-size:11.5px; color:var(--muted);}
+  .kw-list{margin-top:14px;}
+  .kw-list .label{font-size:12.5px; color:var(--muted); margin-bottom:8px;}
+  .kw{
+    display:inline-flex; align-items:center; gap:5px; font-size:12.5px; padding:5px 10px;
+    border-radius:999px; border:1px solid var(--line); margin:0 6px 6px 0; color:var(--muted);
+  }
+  .kw.hit{background:var(--teal); color:#fff; border-color:var(--teal);}
+
+  /* Rubric */
+  .dim{border-top:1px solid var(--line); padding-top:16px; margin-top:16px;}
+  .dim:first-of-type{border-top:none; margin-top:6px;}
+  .dim-head{display:flex; justify-content:space-between; align-items:baseline;}
+  .dim-head h3{margin:0; font-size:14.5px; color:var(--navy-deep);}
+  .dim-head .score-val{font-family:'Space Mono',monospace; color:var(--teal); font-weight:700;}
+  .dim-desc{font-size:12px; color:var(--muted); margin:4px 0 10px;}
+  .levels{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
+  .lvl{
+    border:1px solid var(--line); border-radius:9px; padding:8px 6px; font-size:11.5px;
+    text-align:center; cursor:pointer; color:var(--muted); line-height:1.4;
+    transition:all .12s ease;
+  }
+  .lvl b{display:block; font-family:'Space Mono',monospace; font-size:14px; color:var(--ink);}
+  .lvl.sel{background:var(--navy); border-color:var(--navy); color:#fff;}
+  .lvl.sel b{color:#fff;}
+
+  .total-row{
+    margin-top:20px; padding-top:16px; border-top:2px solid var(--navy-deep);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .total-row .lbl{font-size:14px; color:var(--muted);}
+  .total-row .val{font-family:'Space Mono',monospace; font-size:30px; color:var(--navy-deep); font-weight:700;}
+  .cefr-badge{
+    background:var(--coral-soft); color:var(--coral); font-family:'Space Mono',monospace;
+    font-size:12px; padding:4px 10px; border-radius:7px; margin-left:8px;
+  }
+
+  .btn-row{display:flex; gap:10px; margin-top:18px;}
+  .btn{
+    flex:1; border:none; border-radius:10px; padding:12px 14px; font-size:14px; cursor:pointer;
+    font-family:'Sarabun',sans-serif; font-weight:600; transition:opacity .15s ease;
+  }
+  .btn:hover{opacity:.9;}
+  .btn.primary{background:var(--navy-deep); color:#fff;}
+  .btn.ghost{background:#fff; border:1px solid var(--line); color:var(--navy-deep);}
+
+  .side-note{
+    background:var(--navy-deep); color:#DCE6F2; border-radius:16px; padding:20px 22px;
+    font-size:13px; line-height:1.7;
+  }
+  .side-note h4{color:#8FD8CF; margin:0 0 8px; font-size:13px; font-family:'Space Mono',monospace; letter-spacing:.04em;}
+  .side-note ul{margin:0; padding-left:18px;}
+  .side-note li{margin-bottom:6px;}
+
+  footer{text-align:center; color:var(--muted); font-size:12px; padding:26px 6vw 40px;}
+
+  @media print{
+    header, .btn-row, .rec-wrap, .side-note, #resetBtn{display:none !important;}
+    body{background:#fff;}
+    main{margin-top:10px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Digital Assessment for CEFR Challenge · กิจกรรมที่ 2</div>
+  <h1>Speak &amp; Score — เครื่องมือวัดผลดิจิทัลทักษะ Speaking ระดับชั้น ม.3</h1>
+  <p class="sub">ให้นักเรียนพูดตามสถานการณ์ที่กำหนด ระบบจะถอดเสียงเป็นข้อความด้วย AI โดยอัตโนมัติ พร้อมวิเคราะห์เบื้องต้น จากนั้นครูให้คะแนนด้วย 3D Rubric ในหน้าเดียวกัน</p>
+  <div class="meta-row">
+    <div class="pill">CEFR <b>A2–B1</b></div>
+    <div class="pill">AI <b>Speech-to-Text</b></div>
+    <div class="pill">Rubric <b>3 มิติ / 4 ระดับ</b></div>
+    <div class="pill">ระดับชั้น <b>ม.3</b></div>
+  </div>
+</header>
+
+<main>
+  <div>
+    <!-- STEP 1: Student info + Task -->
+    <div class="card">
+      <h2><span class="step-no">1</span> ข้อมูลผู้พูด และสถานการณ์การพูด</h2>
+      <p class="hint">กรอกข้อมูลนักเรียน แล้วเลือกหัวข้อการพูด (Speaking Task) ตาม Can-Do Statement ของ ม.3</p>
+      <div class="field-row">
+        <div class="field"><label>ชื่อ-สกุลนักเรียน</label><input id="stuName" placeholder="เช่น เด็กหญิงใจดี รักเรียน"></div>
+        <div class="field"><label>ชั้น/ห้อง</label><input id="stuClass" placeholder="เช่น ม.3/2"></div>
+        <div class="field"><label>วันที่สอบ</label><input id="stuDate" type="date"></div>
+      </div>
+      <select id="topicSelect">
+        <option value="0">1) My Daily Life &amp; Future Dreams — ชีวิตประจำวันและความฝันในอนาคต</option>
+        <option value="1">2) Describing a Picture — บรรยายภาพสถานการณ์ในชีวิตประจำวัน</option>
+        <option value="2">3) A Problem &amp; a Solution — เล่าปัญหาใกล้ตัวและวิธีแก้ไข</option>
+      </select>
+      <div class="task-box" id="taskBox"></div>
+    </div>
+
+    <!-- STEP 2: Recording -->
+    <div class="card">
+      <h2><span class="step-no">2</span> บันทึกเสียงพูด (AI ถอดเสียงอัตโนมัติ)</h2>
+      <p class="hint">กดปุ่มไมโครโฟนแล้วเริ่มพูดตามหัวข้อด้านบน ระบบจะแสดงคลื่นเสียงและถอดข้อความสด ๆ ให้ทันที</p>
+      <div class="rec-wrap">
+        <button class="rec-btn" id="recBtn">●</button>
+        <div class="wave" id="wave"></div>
+        <div class="timer mono" id="timer">00:00</div>
+      </div>
+      <div class="rec-status" id="recStatus">พร้อมบันทึกเสียง — ใช้ได้ดีที่สุดบน Google Chrome (คอมพิวเตอร์/Android)</div>
+
+      <div class="transcript-box" id="transcriptBox">
+        <span class="ai-tag">🤖 AI Transcript</span><br>
+        <span class="placeholder">ข้อความที่นักเรียนพูดจะปรากฏที่นี่แบบเรียลไทม์...</span>
+      </div>
+
+      <div class="analysis-grid">
+        <div class="stat"><b id="statWords">0</b><span>คำที่พูด (words)</span></div>
+        <div class="stat"><b id="statTime">0s</b><span>ระยะเวลาพูด</span></div>
+        <div class="stat"><b id="statWpm">0</b><span>คำ/นาที (fluency)</span></div>
+      </div>
+
+      <div class="kw-list">
+        <div class="label">คำศัพท์เป้าหมายที่ตรวจพบอัตโนมัติ (Keyword Coverage) —AI ช่วยตรวจสอบ</div>
+        <div id="kwWrap"></div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Rubric -->
+    <div class="card">
+      <h2><span class="step-no">3</span> 3D Rubric — ให้คะแนนโดยครูผู้สอน</h2>
+      <p class="hint">เลือกระดับคะแนนแต่ละมิติ (1–4) ระบบจะรวมคะแนนและประเมินระดับ CEFR ให้อัตโนมัติ</p>
+
+      <div class="dim" data-dim="content">
+        <div class="dim-head"><h3>มิติที่ 1 · Content &amp; Task Fulfillment</h3><span class="score-val">—/4</span></div>
+        <div class="dim-desc">เนื้อหาตรงประเด็น ครบตามสถานการณ์ที่กำหนด</div>
+        <div class="levels">
+          <div class="lvl" data-v="1"><b>1</b>ไม่ตรงประเด็น</div>
+          <div class="lvl" data-v="2"><b>2</b>ตรงบางส่วน</div>
+          <div class="lvl" data-v="3"><b>3</b>ตรงประเด็น ครบถ้วนพอควร</div>
+          <div class="lvl" data-v="4"><b>4</b>ครบถ้วน มีรายละเอียดดี</div>
+        </div>
+      </div>
+
+      <div class="dim" data-dim="language">
+        <div class="dim-head"><h3>มิติที่ 2 · Language Use (Vocabulary &amp; Grammar)</h3><span class="score-val">—/4</span></div>
+        <div class="dim-desc">ความถูกต้องและความหลากหลายของคำศัพท์/โครงสร้างประโยค</div>
+        <div class="levels">
+          <div class="lvl" data-v="1"><b>1</b>คำศัพท์จำกัดมาก</div>
+          <div class="lvl" data-v="2"><b>2</b>ใช้คำศัพท์พื้นฐาน มีข้อผิดพลาดบ่อย</div>
+          <div class="lvl" data-v="3"><b>3</b>ใช้โครงสร้างง่ายได้ถูกต้องพอควร</div>
+          <div class="lvl" data-v="4"><b>4</b>หลากหลาย ถูกต้อง สื่อสารชัดเจน</div>
+        </div>
+      </div>
+
+      <div class="dim" data-dim="delivery">
+        <div class="dim-head"><h3>มิติที่ 3 · Delivery (Pronunciation &amp; Fluency)</h3><span class="score-val">—/4</span></div>
+        <div class="dim-desc">การออกเสียง จังหวะการพูด และความคล่องแคล่ว</div>
+        <div class="levels">
+          <div class="lvl" data-v="1"><b>1</b>ฟังไม่ค่อยเข้าใจ</div>
+          <div class="lvl" data-v="2"><b>2</b>ติดขัดบ่อย ต้องทวน</div>
+          <div class="lvl" data-v="3"><b>3</b>คล่องพอควร เข้าใจได้</div>
+          <div class="lvl" data-v="4"><b>4</b>คล่องแคล่ว ออกเสียงชัดเจน</div>
+        </div>
+      </div>
+
+      <div class="total-row">
+        <div class="lbl">คะแนนรวม (จาก 12)</div>
+        <div><span class="val" id="totalScore">0</span><span class="cefr-badge" id="cefrResult">รอให้คะแนน</span></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" onclick="window.print()">🖨️ พิมพ์ผลการประเมิน</button>
+        <button class="btn ghost" id="resetBtn">↺ เริ่มนักเรียนคนใหม่</button>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="side-note">
+      <h4>วิธีใช้ / HOW TO USE</h4>
+      <ul>
+        <li><b>ครู:</b> เปิดลิงก์นี้บนโปรเจกเตอร์หรือแท็บเล็ต 1 เครื่อง/นักเรียน 1 คน</li>
+        <li>กรอกชื่อ–ห้อง เลือกหัวข้อการพูดที่ต้องการทดสอบ</li>
+        <li>กดปุ่มไมค์ให้นักเรียนพูดตามสถานการณ์ที่กำหนด (30–60 วินาที)</li>
+        <li>AI จะถอดเสียงเป็นข้อความและตรวจคำศัพท์เป้าหมายให้อัตโนมัติ</li>
+        <li>ครูให้คะแนน 3D Rubric ทีละมิติ ระบบสรุประดับ CEFR ให้ทันที</li>
+        <li>กด "พิมพ์ผลการประเมิน" เพื่อบันทึกเป็น PDF ต่อนักเรียน 1 คน</li>
+      </ul>
+      <h4 style="margin-top:16px;">หมายเหตุ AI</h4>
+      <ul>
+        <li>ใช้ Web Speech API ถอดเสียงพูด→ข้อความแบบ real-time ในเบราว์เซอร์ ไม่ส่งข้อมูลออกนอกเครื่อง</li>
+        <li>รองรับดีที่สุดบน Google Chrome; หากเบราว์เซอร์ไม่รองรับ ครูยังให้คะแนนจากการฟังสดได้ตามปกติ</li>
+      </ul>
+    </div>
+  </div>
+</main>
+
+<footer>ออกแบบสำหรับ SPM Korat Smart Master English Teacher Award 2026 — กิจกรรมที่ 2 · Digital Assessment for CEFR Challenge (Speaking · ม.3)</footer>
+
+<script>
+const topics = [
+  {
+    en:"Talk about your daily life and one dream you have for the future.",
+    th:"พูดเกี่ยวกับชีวิตประจำวันของนักเรียน และความฝันในอนาคต 1 เรื่อง",
+    cando:"Can-Do (A2–B1): I can describe my daily routine and talk about simple future plans using connected sentences.",
+    keywords:["every day","usually","after school","in the future","I want to","because"]
+  },
+  {
+    en:"Look at a picture of a daily situation and describe what is happening.",
+    th:"ดูภาพสถานการณ์ในชีวิตประจำวัน แล้วบรรยายสิ่งที่เห็น",
+    cando:"Can-Do (A2–B1): I can describe people, places and simple actions I see in a picture using present tense.",
+    keywords:["there is","there are","is wearing","is doing","in the picture","behind","next to"]
+  },
+  {
+    en:"Describe a small problem you face and explain how you solve it.",
+    th:"เล่าปัญหาเล็ก ๆ ที่เจอในชีวิตประจำวัน และวิธีที่นักเรียนแก้ไขปัญหานั้น",
+    cando:"Can-Do (A2–B1): I can explain a simple problem and describe the solution using because/so.",
+    keywords:["problem","because","so","I decided to","solution","first","finally"]
+  }
+];
+
+function renderTask(i){
+  const t = topics[i];
+  document.getElementById('taskBox').innerHTML =
+    `<div class="en">"${t.en}"</div><div class="th">${t.th}</div><div class="cando">${t.cando}</div>`;
+  renderKeywords(t.keywords);
+}
+document.getElementById('topicSelect').addEventListener('change', e=>renderTask(e.target.value));
+renderTask(0);
+
+function renderKeywords(list){
+  const wrap = document.getElementById('kwWrap');
+  wrap.innerHTML = list.map(k=>`<span class="kw" data-k="${k.toLowerCase()}">${k}</span>`).join('');
+}
+
+/* ---------- Waveform bars ---------- */
+const waveEl = document.getElementById('wave');
+for(let i=0;i<28;i++){ const s=document.createElement('span'); waveEl.appendChild(s); }
+let waveInterval;
+function startWave(){
+  waveEl.classList.add('active');
+  waveInterval = setInterval(()=>{
+    [...waveEl.children].forEach(s=>{ s.style.height = (6+Math.random()*38)+'px'; });
+  }, 110);
+}
+function stopWave(){
+  clearInterval(waveInterval);
+  waveEl.classList.remove('active');
+  [...waveEl.children].forEach(s=>{ s.style.height='8px'; });
+}
+
+/* ---------- Timer ---------- */
+let timerInt, seconds=0;
+function startTimer(){
+  seconds=0;
+  timerInt = setInterval(()=>{
+    seconds++;
+    const m = String(Math.floor(seconds/60)).padStart(2,'0');
+    const s = String(seconds%60).padStart(2,'0');
+    document.getElementById('timer').textContent = `${m}:${s}`;
+  },1000);
+}
+function stopTimer(){ clearInterval(timerInt); }
+
+/* ---------- Speech recognition (AI transcription) ---------- */
+let recognition, recognizing=false, finalTranscript='';
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recBtn = document.getElementById('recBtn');
+const statusEl = document.getElementById('recStatus');
+const transcriptBox = document.getElementById('transcriptBox');
+
+if(SpeechRecognition){
+  recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onresult = (event)=>{
+    let interim = '';
+    for(let i=event.resultIndex;i<event.results.length;i++){
+      const txt = event.results[i][0].transcript;
+      if(event.results[i].isFinal){ finalTranscript += txt + ' '; }
+      else { interim += txt; }
+    }
+    updateTranscript(finalTranscript, interim);
+  };
+  recognition.onerror = ()=>{ statusEl.textContent = 'ไม่สามารถเข้าถึงไมโครโฟนได้ หรือเบราว์เซอร์ไม่รองรับ — โปรดลองบน Chrome'; };
+} else {
+  statusEl.textContent = 'เบราว์เซอร์นี้ไม่รองรับ AI Speech-to-Text — ครูสามารถให้คะแนนจากการฟังสดได้ตามปกติ';
+}
+
+function updateTranscript(final, interim){
+  transcriptBox.innerHTML = `<span class="ai-tag">🤖 AI Transcript</span><br>${final}<span style="color:#A7B2BE">${interim}</span>`;
+  const words = (final.trim().split(/\s+/).filter(Boolean));
+  document.getElementById('statWords').textContent = words.length;
+  document.getElementById('statTime').textContent = seconds + 's';
+  const wpm = seconds>0 ? Math.round((words.length/seconds)*60) : 0;
+  document.getElementById('statWpm').textContent = wpm;
+
+  const lower = final.toLowerCase();
+  document.querySelectorAll('.kw').forEach(el=>{
+    if(lower.includes(el.dataset.k)) el.classList.add('hit');
+  });
+}
+
+recBtn.addEventListener('click', ()=>{
+  if(!recognizing){
+    finalTranscript = '';
+    if(recognition){ try{ recognition.start(); }catch(e){} }
+    recognizing = true;
+    recBtn.classList.add('recording');
+    recBtn.textContent = '■';
+    statusEl.textContent = 'กำลังบันทึกเสียง... พูดตามหัวข้อที่กำหนด';
+    startWave(); startTimer();
+  } else {
+    if(recognition){ recognition.stop(); }
+    recognizing = false;
+    recBtn.classList.remove('recording');
+    recBtn.textContent = '●';
+    statusEl.textContent = 'บันทึกเสร็จสิ้น — ตรวจสอบข้อความที่ถอดได้ด้านล่าง แล้วให้คะแนน Rubric ได้เลย';
+    stopWave(); stopTimer();
+  }
+});
+
+/* ---------- Rubric scoring ---------- */
+const scores = {content:0, language:0, delivery:0};
+document.querySelectorAll('.dim').forEach(dim=>{
+  const key = dim.dataset.dim;
+  dim.querySelectorAll('.lvl').forEach(lvl=>{
+    lvl.addEventListener('click', ()=>{
+      dim.querySelectorAll('.lvl').forEach(l=>l.classList.remove('sel'));
+      lvl.classList.add('sel');
+      scores[key] = parseInt(lvl.dataset.v);
+      dim.querySelector('.score-val').textContent = `${lvl.dataset.v}/4`;
+      updateTotal();
+    });
+  });
+});
+
+function updateTotal(){
+  const total = scores.content + scores.language + scores.delivery;
+  document.getElementById('totalScore').textContent = total;
+  const badge = document.getElementById('cefrResult');
+  if(total===0){ badge.textContent='รอให้คะแนน'; return; }
+  if(total<=5){ badge.textContent='ต่ำกว่า A2 — ควรฝึกเพิ่มเติม'; }
+  else if(total<=8){ badge.textContent='ระดับ A2 (Can-Do พื้นฐาน)'; }
+  else if(total<=10){ badge.textContent='ระดับ A2+/B1 (Can-Do ผ่านเกณฑ์)'; }
+  else{ badge.textContent='ระดับ B1 (Can-Do ดีเยี่ยม)'; }
+}
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  document.getElementById('stuName').value='';
+  document.getElementById('stuClass').value='';
+  document.getElementById('stuDate').value='';
+  finalTranscript=''; seconds=0;
+  transcriptBox.innerHTML = `<span class="ai-tag">🤖 AI Transcript</span><br><span class="placeholder">ข้อความที่นักเรียนพูดจะปรากฏที่นี่แบบเรียลไทม์...</span>`;
+  document.getElementById('statWords').textContent='0';
+  document.getElementById('statTime').textContent='0s';
+  document.getElementById('statWpm').textContent='0';
+  document.querySelectorAll('.kw').forEach(el=>el.classList.remove('hit'));
+  document.querySelectorAll('.lvl').forEach(l=>l.classList.remove('sel'));
+  document.querySelectorAll('.score-val').forEach(s=>s.textContent='—/4');
+  scores.content=0; scores.language=0; scores.delivery=0;
+  updateTotal();
+  document.getElementById('timer').textContent='00:00';
+});
+</script>
+</body>
+</html>
